@@ -31,7 +31,7 @@ func main() {
 
 	handler.NewServer(cfg)
 
-	handler.Serve()
+	handler.Serve(cfg)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

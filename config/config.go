@@ -32,8 +32,9 @@ type SQL struct {
 
 // Config holds all settings of bank server.
 type Config struct {
-	Log *Log `yaml:"log"`
-	SQL *SQL `yaml:"sql"`
+	Log  *Log   `yaml:"log"`
+	SQL  *SQL   `yaml:"sql"`
+	Port string `yaml:port`
 }
 
 // GetDefault creates new Config instance with all default settings.
@@ -52,6 +53,7 @@ func GetDefault() *Config {
 			DriverName: "postgres",
 			DataSource: "postgresql://roach1@localhost:26257/gochat?sslmode=disable&connect_timeout=10",
 		},
+		Port: ":8081",
 	}
 }
 

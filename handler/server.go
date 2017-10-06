@@ -32,9 +32,9 @@ func NewServer(cfg *config.Config) {
 	Srv.Router = router
 }
 
-func Serve() {
-	log.Println("Listen and serve at :8080")
-	log.Fatal(http.ListenAndServe(":8080", Srv.Router))
+func Serve(cfg *config.Config) {
+	log.Printf("Listen and serve at :%s", cfg.Port)
+	log.Fatal(http.ListenAndServe(cfg.Port, Srv.Router))
 }
 
 func StopServer() {
