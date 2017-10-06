@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/go-chat/gochat/apperror"
 	"github.com/go-chat/gochat/config"
 	"github.com/go-chat/gochat/model"
 	"github.com/jinzhu/gorm"
@@ -15,6 +16,7 @@ type Store struct {
 }
 
 type IUser interface {
+	Save(user *model.User) *apperror.AppError
 }
 
 func NewStore(config *config.Config) *Store {

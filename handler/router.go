@@ -21,6 +21,7 @@ func NewRouter() *mux.Router {
 	var routes []Route
 
 	routes = append(routes, Route{"GET", "/index", "Index", Index})
+	routes = append(routes, Route{"POST", "/register", "Register", Register})
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
