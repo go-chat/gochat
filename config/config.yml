@@ -1,0 +1,6 @@
+log:
+  level: debug
+sql:
+  driver_name: postgres
+  data_source: postgresql://localhost:26257/gochat?sslmode=disable&connect_timeout=10
+
