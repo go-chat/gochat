@@ -7,15 +7,16 @@ import (
 	"github.com/go-chat/gochat/config"
 	"github.com/go-chat/gochat/store"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/websocket"
+	websocket "github.com/gorilla/websocket"
 
 	_ "github.com/lib/pq"
 )
 
 type Server struct {
-	Store   *store.Store
-	Router  *mux.Router
-	Clients map[int]*websocket.Conn
+	Store    *store.Store
+	Router   *mux.Router
+	Clients  map[*http.Request]*websocket.Conn
+	Upgrader websocket.Upgrader
 }
 
 // global server
@@ -30,6 +31,13 @@ func NewServer(cfg *config.Config) {
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../static/"))))
 
 	Srv.Router = router
+
+	Srv.Upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	Srv.Clients = make(map[*http.Request]*websocket.Conn)
 }
 
 func Serve(cfg *config.Config) {

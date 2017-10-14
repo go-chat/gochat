@@ -1,91 +1,18 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-chat/gochat/apperror"
 	"github.com/go-chat/gochat/model"
 )
-
-func Index(w http.ResponseWriter, r *http.Request) {
-	encodeSuccessResponse(w, "hehe")
-}
-
-func Register(w http.ResponseWriter, r *http.Request) {
-	lf := logrus.Fields{"func": "handler.Register"}
-
-	type RegisterRequest struct {
-		Email           string `json:"email" valid:"email"`
-		Name            string `json:"name" valid:"required"`
-		Password        string `json:"password" valid:"required"`
-		ConfirmPassword string `json:"confirm_password" valid:"required"`
-	}
-
-	var p = &RegisterRequest{}
-
-	err := json.NewDecoder(r.Body).Decode(p)
-	if err != nil {
-		logrus.WithFields(lf).Errorf("failed to decode body, err = %v", err)
-		encodeErrorResponse(w, fmt.Errorf("failed to decode body, err = %v", err), http.StatusBadRequest)
-		return
-	}
-
-	valid, err := govalidator.ValidateStruct(p)
-	if err != nil {
-		logrus.WithFields(lf).Errorf("failed to validate body, err =  %v", err)
-		encodeErrorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-	if !valid {
-		logrus.WithFields(lf).Errorf("invalid params, err =  %v", err)
-		encodeErrorResponse(w, errors.New("struct is not valid"), http.StatusBadRequest)
-		return
-	}
-
-	if p.Password != p.ConfirmPassword {
-		logrus.WithFields(lf).Errorf("confirm password does not match, err =  %v", err)
-		encodeErrorResponse(w, errors.New("confirm password does not match"), http.StatusBadRequest)
-		return
-	}
-
-	user := &model.User{}
-	user.Email = p.Email
-	user.Name = p.Name
-	user.Salt = NewSalt()
-	user.Password = HashPassword(user.Password, user.Salt)
-
-	apperr := Srv.Store.IUser.Save(user)
-	if apperr != nil {
-		encodeAppErrorResponse(w, apperr)
-		return
-	}
-
-	token, appErr := generateToken(user)
-	if appErr != nil {
-		logrus.WithFields(lf).Error("failed to generate token")
-		encodeAppErrorResponse(w, appErr)
-		return
-	}
-
-	encodeSuccessResponse(w, struct {
-		Token  string `json:"token"`
-		Name   string `json:"name"`
-		Email  string `json:"email"`
-		Avatar string `json:"avatar"`
-	}{Token: token,
-		Name:   user.Name,
-		Email:  user.Email,
-		Avatar: user.Avatar})
-}
 
 func generateToken(user *model.User) (string, *apperror.AppError) {
 	lf := logrus.Fields{"func": "handler.generateToken"}
@@ -117,4 +44,17 @@ func generateToken(user *model.User) (string, *apperror.AppError) {
 	}
 
 	return tokenString, nil
+}
+
+func getUserFromToken(r *http.Request) (*model.User, *apperror.AppError) {
+	lf := logrus.Fields{"func": "handler.getUserFromToken"}
+
+	token := strings.TrimSpace(r.Header.Get("Authorization"))
+	if len(token) < 7 {
+		logrus.WithFields(lf).Error("token is invalid")
+		return nil, apperror.NewAppError(errors.New("token is invalid"), "token is invalid", http.StatusBadRequest)
+	}
+	token = token[7:]
+
+	return Srv.Store.IUser.GetUserFromToken(token)
 }
